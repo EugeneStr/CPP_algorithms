@@ -183,7 +183,7 @@ void main_diagonal_position(int** array, int N) {
     // Заполнение первой строки и столбца массива
     array[0][0] = (N * N - N) / 2;
     for (int i = 1; i < N; i++) {
-        array[0][i] = array[0][i - 1] - (N - i);
+        array[0][N - 1 - i] = array[0][N - i] - (N - i);
         array[i][0] = array[i - 1][0] + N - i + 1;
     }
 
