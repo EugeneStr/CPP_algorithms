@@ -34,17 +34,18 @@ public:
 	* @param type_of_status Виды статусов
 	*/
 	void printWizardCharacteristics(bool* type_of_status) {
+		string type_spells[4] = { "Дальнее", "Ближнее", "Хил", "Проклятие" };
+		string statuses[4] = { "Нокаут ", "Ярость ", "Слепота ", "Бонусхил " };
 		cout << "\nhealth: " << health <<
 			"\nmana: " << mana << "\nspells: ";
 		for (int i = 0; i < M; i++) {
 			if (spells[i] > 0)
-			 cout << spells[i] << " ";
+			 cout << type_spells[spells[i] - 1] << " ";
 		}
-		cout << "\nstatus: ";
+		
 		for (int i = 0; i < 4; i++) {
-			cout << type_of_status[i] << " ";
+			if (type_of_status[i]) cout << "\nstatus: " + statuses[i] + " ";
 		}
-		 
 	}
 
 	/* 2 рандомных заклинания
@@ -327,7 +328,7 @@ public:
 				long_range.setCharacteristics(); // Ввод характеристик
 				if (array_of_wizards[i][j].mana < long_range.getManaPrice()) { // Проверка на количество маны
 					array_of_wizards[i][j].printWizardCharacteristics(array_of_wizards[i][j].type_of_status); 
-					cout << "\nНет маны\n"; 
+					cout << "\nНет маны\n";
 					continue;
 				}
 				long_range.setLastingRounds(); // Изменение длительности статуса 
@@ -409,6 +410,7 @@ public:
 				array_of_wizards[i][j].printWizardCharacteristics(array_of_wizards[i][j].type_of_status); // Вывод характеристик мага
 				cout << "\nЗакончились заклинания\n";
 				array_of_wizards[i][j].spells[round] = -1;
+				otchet(round, i, j); // Запись в отчет
 				continue;
 
 			}
@@ -437,11 +439,28 @@ public:
 
 	/* Вывод отчета */
 	void printOtchet() {
-		for (int j = 0; j < N; j++) {
+		int key;
+		cout << "\n\n[0] - Вывести отчет\n[1] - Закрыть программу\n";
+		cin >> key;
+		switch (key)
+		{
+		case 0:
+			cout << "\n\n---------ОТЧЕТ---------";
 			for (int i = 0; i < 2; i++) {
-				cout << array_of_wizards[i][j].otchet << endl;
+				for (int j = 0; j < N; j++) {
+					cout << array_of_wizards[i][j].otchet << endl;
+				}
 			}
+			break;
+		case 1:
+			exit(0);
+			break;
+		default:
+			cout << "Неверный ключ";
+			printOtchet();
+			break;
 		}
+		
 	}
 
 	/* Очищение массивов */
@@ -454,7 +473,7 @@ public:
 
 	/* Вывод шапки раундов */
 	void printHeader(int round, int team, int wizard) {
-		cout << "\n---------Раунд " << round << "---------\n";
+		cout << "\n\n---------Раунд " << round << "---------";
 		cout << "\n------Команда " << team << "------";
 		cout << "\n---Маг " << wizard << "---";
 	}
@@ -484,7 +503,6 @@ int main()
 			fight.Spell(round, i); // Раунды
 		}
 	}
-	cout << "\n\n---------ОТЧЕТ---------";
 	fight.printOtchet(); // Вывод отчета
 	fight.deleteArrays(); // Очищение массивов
 	return 0;
