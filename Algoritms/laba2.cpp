@@ -4,65 +4,68 @@
 #include <fstream>
 #include <vector>
 
-const int M = 5; // Количество тестов
-unsigned int count_of_recursion = 0; // Счетчик рекурсий
-
 using namespace std;
+
+const int M = 20; // Количество тестов
+unsigned int count_of_recursion = 0; // Счетчик рекурсий
+int height = 0;
 
 /* Очистка файла перед записью */
 void clearFile() {
     ofstream out;
-    out.open("C:\\Users\\evgen\\Desktop\\Алгоритмы\\data_h.txt");
+    out.open("C:\\Users\\evgen\\Desktop\\Алгоритмы\\data_test.txt");
+}
+
+/* Выбор опорного элемента 
+* @param pivot_value опорный элемент
+* @param i новое начало
+* return i + 1 возвращает индекс опорного элемента
+*/
+int partition(vector <double> v, int begin, int last) {
+    double pivot_value = v[last];
+    int i = begin - 1;
+    double temp;
+    for (int j = begin; j < last; j++) {
+        if (v[j] <= pivot_value) {
+            i++;
+            temp = v[i];
+            v[i] = v[j];
+            v[j] = temp;
+        }
+    }
+    temp = v[i + 1];
+    v[i + 1] = v[last];
+    v[last] = temp;
+    return i + 1;
 }
 
 /* Быстрая сортировка
 *
 * @param pivot опорный элемент
-* @param new_begin начало сортировки
-* @param new_end конец сортировки
-* @param count переменная для хранения
+* @param depth глубина ветки
+* @param count_of_recursion количество рекурсий
+* @param height максимальная глубина стека
 * @param v массив
 */
-void quickSort(vector <double> v, int begin, int last) {
-    double pivot, count;
-    int new_begin = begin, new_last = last;
+void quickSort(vector <double> v, int begin, int last, int depth) {
+    double pivot;
     count_of_recursion++;
-    pivot = v[(new_begin + new_last) / 2]; //вычисление опорного элемента
-    do
-    {
-        while (v[new_begin] < pivot) new_begin++;
-        while (v[new_last] > pivot) new_last--;
-        if (new_begin <= new_last) //перестановка элементов
-        {
-            count = v[new_begin];
-            v[new_begin] = v[new_last];
-            v[new_last] = count;
-            new_begin++;
-            new_last--;
-        }
-    } while (new_begin <= new_last);
-    if (begin < new_last) quickSort(v, begin, new_last); // Вызов рекурсии
-    if (new_begin < last) quickSort(v, new_begin, last); // Вызов рекурсии
+    if (depth > height) height = depth;
+    if (begin < last) {
+        pivot = partition(v, begin, last);
+        quickSort(v, begin, pivot - 1, depth + 1);
+        quickSort(v, pivot + 1, last, depth + 1);
+    }
 }
 
 /* Запись результата в файл */
 void writer(int i, int N, double msec) {
     ofstream out;
 
-    out.open("C:\\Users\\evgen\\Desktop\\Алгоритмы\\data_h.txt", ios::app);
+    out.open("C:\\Users\\evgen\\Desktop\\Алгоритмы\\data_test.txt", ios::app);
     if (out.is_open())
     {
-        out << i << " " << N << " " << msec << " " << count_of_recursion-1 << endl;
-    }
-}
-
-/* Отделение части записи */
-void piece() {
-    ofstream out;
-    out.open("C:\\Users\\evgen\\Desktop\\Алгоритмы\\data2.txt", ios::app);
-    if (out.is_open())
-    {
-        out << "---------------------------------" << endl;
+        out << i << " " << N << " " << msec << " " << count_of_recursion-1 << " " << height << endl;
     }
 }
 
@@ -75,10 +78,11 @@ void piece() {
 * @param last конец сортировки
 */
 void timer(vector <double> v, int N, int i) {
-    int begin = 0, last = v.size() - 1;
+    int begin = 0, last = v.size() - 1, depth = 0;
+    height = 0;
     count_of_recursion = 0; // Обнуление счетчика
     chrono::high_resolution_clock::time_point start = chrono::high_resolution_clock::now(); // стартовое время сортировки
-    quickSort(v, begin, last); // сортировка
+    quickSort(v, begin, last, depth); // сортировка
     chrono::high_resolution_clock::time_point end = chrono::high_resolution_clock::now(); // конечное время сортировки
     chrono::duration<double, nano> nano_diff = end - start; // время в наносекундах
     chrono::duration<double, micro> micro_diff = end - start; // время в микросекундах
@@ -95,7 +99,6 @@ void sortingSort(vector <double> v, int N, int i) {
 
 /* Отделение части записи */
 void nullSort(vector <double> v, int N) {
-    ofstream out;
     timer(v, N, 0);
 }
 
@@ -126,28 +129,30 @@ int main()
 {
     setlocale(LC_ALL, "Russian");
     mt19937 engine(time(0));
-    int N[] = { 1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000 }; // массив различных длин массива
+    int N[] = { 1000, 2000, 4000, 8000, 16000, 32000 }; // массив различных длин массива
     vector <double> v; // массив
     clearFile(); // очистка файла
+
     for (int j = 0; j < size(N); j++) {
+
         vector <double> test_array(N[j]); // Массив из нулей
         nullSort(test_array, v.size()); // Сортировка нулевого массива
-        for (int i = 0; i < M; i++) { // M тестов
-            piece();
-                       
+
+        for (int i = 0; i < M; i++) { // M тестов          
+
             // генерация случайных чисел от -1 до 1
             uniform_real_distribution<double> gen(-1.0, 1.0);
             for (int el = 0; el < N[j]; el++) {
                 v.push_back(gen(engine));
             }
+
             timer(v, v.size(), i); // таймер
             sortingSort(v, v.size(), i); // Отсортированный массив
             antiQSort(v, v.size(), i); // Массив с макс колвом сравнений
             determQSort(v, v.size(), i); // Массив с макс колвом сравнений
+
             v.clear();
-            
         }
-        piece();
         test_array.clear();
     }
     cout << "Programm end!";
