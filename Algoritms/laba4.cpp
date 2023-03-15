@@ -11,11 +11,23 @@
 
 using namespace std;
 
+/* Структура для ребра*/
 struct Edge {
-	int begin;
-	int end;
+	int begin; // Начало ребра
+	int end; // Конец ребра
 };
 
+/* Класс графа
+* 
+* @param ver Количество вершин
+* @param reb Количество ребер
+* @param oriented Ориентированность
+* @param matrix_smezh Матрица смежности
+* @param matrix_inc Матрица инцидентности
+* @param list_smezh Список смежности
+* @param list_reb Список ребер
+* @param binds Количество связанных вершин
+*/
 class Grapth {
 public:
 	int ver;
@@ -27,6 +39,7 @@ public:
 	list <list<int>> list_reb;
 	int* binds;
 
+	/* Вывод матрицы смежности*/
 	void printMatrixSmezh() {
 		cout << "Матрица смежности\n";
 		cout << setw(4) << "|";
@@ -43,6 +56,7 @@ public:
 		}
 	}
 
+	/* Вывод матрицы инцидентности*/
 	void printMatrixInc() {
 		cout << "Матрица инцендентности\n";
 		cout << setw(4) << "|";
@@ -59,6 +73,7 @@ public:
 		}
 	}
 
+	/* Вывод списка смежности*/
 	void printListSmezh() {
 		list<list<int>> list = list_smezh;
 		cout << "Список смежности\n";
@@ -80,12 +95,14 @@ public:
 		}
 	}
 
+	/* Вывод списка ребер*/
 	void printListReb() {
 		cout << "Список ребер\n";
 		list<list<int>> list = list_reb;
 		int i = 0;
 		while (list.size() > 0) {
-			cout << i + 1 << " | " << (char)(list.front().front() + 65) << " -> " << (char)(list.front().back() + 65) << endl;
+			cout << i + 1 << " | " << (char)(list.front().front() + 65) << 
+				" -> " << (char)(list.front().back() + 65) << endl;
 			list.pop_front();
 			i++;
 		}
@@ -93,19 +110,28 @@ public:
 
 };
 
+/* Генерация матрицы смежности
+* 
+* @param gr Граф
+* @param max_bind Максимальное количество связей у вершины
+* @param oriented Ориентированность
+* @param M Максимально возможное количество ребер
+* @param array_reb Вектор ребер
+* @param count Количество расставленных ребер
+* 
+* @return Граф
+*/
 Grapth genMatSmezh(Grapth gr, int max_bind, bool oriented) {
 
-	int M = gr.ver * (gr.ver - 1) / 2;
-	vector <int> arrray_reb(M);
-
-	for (int i = 0; i < gr.reb; i++) {
+	int M = gr.ver * (gr.ver - 1) / 2; // Максимальное количество возможных ребер
+	vector <int> arrray_reb(M); // Вектор ребер
+	for (int i = 0; i < gr.reb; i++) { // Заполняем первые элементы
 		arrray_reb[i] = 1;
 	}
+	random_shuffle(arrray_reb.begin(), arrray_reb.end()); // Перемешиваем вектор
 
-	random_shuffle(arrray_reb.begin(), arrray_reb.end());
-
-
-	gr.matrix_smezh = new int* [gr.ver];
+	// Динамически выделяем память под массивы
+	gr.matrix_smezh = new int* [gr.ver]; 
 	gr.binds = new int[gr.ver];
 	for (int i = 0; i < gr.ver; i++) {
 		gr.matrix_smezh[i] = new int[gr.ver];
@@ -116,6 +142,7 @@ Grapth genMatSmezh(Grapth gr, int max_bind, bool oriented) {
 	for (int i = 0; i < gr.ver; i++) {
 		gr.matrix_smezh[i][i] = 0;
 		for (int j = i + 1; j < gr.ver; j++) {
+			// Если есть ребро, а места на этой вершине уже нет 
 			if (arrray_reb[k] != 0 && (gr.binds[i] == max_bind || gr.binds[j] == max_bind)) {
 				gr.matrix_smezh[i][j] = gr.matrix_smezh[j][i] = 0;
 				k++;
@@ -123,8 +150,9 @@ Grapth genMatSmezh(Grapth gr, int max_bind, bool oriented) {
 			else {
 				gr.matrix_smezh[i][j] = gr.matrix_smezh[j][i] = arrray_reb[k];
 				k++;
-				count++;
+				count++; // Записываем успешно поставленное ребро
 			}
+			// Прибавляем к количеству связанных вершин
 			if (abs(gr.matrix_smezh[i][j]) == 1) {
 				gr.binds[i]++;
 				gr.binds[j]++;
@@ -132,15 +160,16 @@ Grapth genMatSmezh(Grapth gr, int max_bind, bool oriented) {
 		}
 	}
 
+	// Если есть не проставленные ребра
 	while (M - count > 0) {
 		for (int i = 0; i < gr.ver; i++) {
-			
+			// Если у вершины есть свободное место
 			if (gr.binds[i] < max_bind) {
 				for (int j = i + 1; j < gr.ver; j++) {
 					if (gr.matrix_smezh[i][j] == 0 && gr.binds[j] < max_bind) {
 						gr.matrix_smezh[i][j] = gr.matrix_smezh[j][i] = 1;
-						count++;
-						gr.binds[i]++;
+						count++; // Записываем успешно поставленное ребро
+						gr.binds[i]++; // Прибавляем к количеству связанных вершин
 					}
 					if (M - count <= 0) break;
 				}
@@ -152,14 +181,22 @@ Grapth genMatSmezh(Grapth gr, int max_bind, bool oriented) {
 	return gr;
 }
 
+/* Генерация матрицы инцидентности
+* 
+* @param gr Граф
+* @param oriented Ориентированность
+* @param temp Список ребер
+* 
+* @return gr Граф
+*/
 Grapth genMatInc(Grapth gr, bool oriented) {
-	list<list<int>> temp = gr.list_reb;
-
+	list<list<int>> temp = gr.list_reb; // Приравниваем к промежутному списку список ребер
+	// Выделяем динамически память
 	gr.matrix_inc = new int* [gr.ver];
 	for (int i = 0; i < gr.ver; i++) {
 		gr.matrix_inc[i] = new int[gr.reb];
 	}
-
+	// Заполняем матрицу 0
 	for (int i = 0; i < gr.ver; i++) {
 		for (int j = 0; j < gr.reb; j++) {
 			gr.matrix_inc[i][j] = 0;
@@ -167,48 +204,60 @@ Grapth genMatInc(Grapth gr, bool oriented) {
 	}
 
 	int i = 0;
-
+	// Пока список не пустой
 	while (temp.size() > 0) {
-		if (oriented) {
-			gr.matrix_inc[temp.front().front()][i] = 1;
-			gr.matrix_inc[temp.front().back()][i] = -1;
+		if (oriented) { // Если ориентированный
+			gr.matrix_inc[temp.front().front()][i] = 1; // Выход ребра
+			gr.matrix_inc[temp.front().back()][i] = -1; // Вход ребра
 
 		}
 		else {
-			if (temp.front().front() < temp.front().back()) {
+			if (temp.front().front() < temp.front().back()) { // Для исключения повторений ребер
 				gr.matrix_inc[temp.front().front()][i] = gr.matrix_inc[temp.front().back()][i] = 1;
 			}
 		}
-		temp.pop_front();
+		temp.pop_front(); // Убираем записанное ребро
 		i++;
 	}
 
 	return gr;
 }
 
+/* Генерация списка смежности
+* 
+* @param gr Граф
+* @param temp Список для записи
+* @return gr Граф
+*/
 Grapth genListSmezh(Grapth gr) {
 	list<int> temp;
 	for (int i = 0; i < gr.ver; i++) {
 		for (int j = 0; j < gr.ver; j++) {
-			if (gr.matrix_smezh[j][i] == 1) {
-				temp.push_back(j);
+			if (gr.matrix_smezh[j][i] == 1) { // Если есть связь
+				temp.push_back(j); // Добавляем связь к этой вершине
 			}
 		}
-		gr.list_smezh.push_back(temp);
+		gr.list_smezh.push_back(temp); // Записываем список связей для i-ой вершины
 		temp.clear();
 	}
 	return gr;
 }
 
+/* Генерация списка ребер
+* 
+* @param gr Граф
+* @param temp Список для записи
+* @return gr Граф
+*/
 Grapth genListReb(Grapth gr) {
 	list<int> temp;
 	for (int i = 0; i < gr.ver; i++) {
 		for (int j = 0; j < gr.ver; j++) {
-			if (gr.matrix_smezh[i][j] == 1) {
-				temp.push_back(i);
-				temp.push_back(j);
+			if (gr.matrix_smezh[i][j] == 1) { // Если есть связь
+				temp.push_back(i); // Записываем начало
+				temp.push_back(j); // Записываем конец
 				
-				gr.list_reb.push_back(temp);
+				gr.list_reb.push_back(temp); // Добавляем ребро
 				temp.clear();
 			}
 		}
@@ -225,8 +274,8 @@ int countOfEntryExit(int** array,int i ,int N, int e) {
 }
 
 void genOriented(Grapth gr, int max_entry, int max_exit) {
-	int a[] = { -1, 1 };
 
+	int a[] = { -1, 1 };
 	for (int i = 0; i < gr.ver; i++) {
 		for (int j = i + 1; j < gr.ver; j++) {
 			if (gr.matrix_smezh[i][j] == 1) {
@@ -279,6 +328,20 @@ void deleteDynamicArray(Grapth gr) {
 	delete[] gr.matrix_inc;
 }
 
+/*Поиск в ширину
+* 
+* @param gr Граф
+* @param start Начальная вершина
+* @param req Конечная вершина
+* @param Queue Очередь для посещения
+* @param Edges Стек ребер
+* @param e Ребро
+* @param nodes Список посещенных вершин 
+* @param node Вершина
+* @param begin Начало отсчета времени
+* @param stop Окончание отсчета времени
+* @param milli_diff Время
+*/
 void BFS(Grapth gr, int start, int req) {
 	cout << "\n\nПоиск в ширину (Нахождение кратчайшего пути)\n";
 	chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now(); // стартовое время сортировки
@@ -308,24 +371,39 @@ void BFS(Grapth gr, int start, int req) {
 				if (node == req) break;
 			}
 		}
-		cout << endl << node + 1; // выводим номер вершины
+		//cout << endl << node + 1; // выводим номер вершины
 	}
 	chrono::high_resolution_clock::time_point stop = chrono::high_resolution_clock::now(); // конечное время сортировки
 	chrono::duration<double, milli> milli_diff = stop - begin; // время в наносекундах
 	cout << "\nВремя (млсек): " << milli_diff.count() << endl;
 	cout << "\nПуть до вершины " << req + 1 << endl;
 	cout << req + 1;
-	while (!Edges.empty()) {
-		e = Edges.top();
+	while (!Edges.empty()) { // Пока есть вершины
+		e = Edges.top(); 
 		Edges.pop();
 		if (e.end == req) {
-			req = e.begin;
+			req = e.begin; // Посещенная вершина
 			cout << " <- " << req + 1;
 		}
 	}
 	delete[] nodes;
 }
 
+/*Поиск в глубину
+* 
+* @param gr Граф
+* @param start Начальная вершина
+* @param req Конечная вершина
+* @param Stack Стек для посещения
+* @param Edges Стек ребер
+* @param e Ребро
+* @param nodes Список посещенных вершин 
+* @param node Вершина
+* @param begin Начало отсчета времени
+* @param stop Окончание отсчета времени
+* @param milli_diff Время
+* @return gr Граф
+*/
 Grapth DFS(Grapth gr) {
 	cout << "\nПоиск в глубину (Проверка на существование пути)\n";
 	chrono::high_resolution_clock::time_point begin = chrono::high_resolution_clock::now(); // стартовое время сортировки
@@ -337,9 +415,9 @@ Grapth DFS(Grapth gr) {
 	for (int i = 0; i < gr.ver; i++) // исходно все вершины равны 0
 		nodes[i] = 0;
 
-	start = rand() % gr.ver;
-	cout << "\n" << start;
-	req = rand() % gr.ver;
+	start = rand() % gr.ver; // Выбираем стартовую вершину
+	cout << "\n" << start; 
+	req = rand() % gr.ver; // Выбираем конечную вершину
 	cout << "\n" << req << endl;
 	
 	Stack.push(start); // помещаем в очередь первую вершину
@@ -363,14 +441,14 @@ Grapth DFS(Grapth gr) {
 				if (node == req) break;
 			}
 		}
-		cout << node + 1 << endl; // выводим номер вершины
+		//cout << node + 1 << endl; // выводим номер вершины
 	}
 	chrono::high_resolution_clock::time_point stop = chrono::high_resolution_clock::now(); // конечное время сортировки
 	chrono::duration<double, milli> milli_diff = stop - begin; // время в наносекундах
 	cout << "\nВремя (млсек): " << milli_diff.count() << endl;
 	cout << "Путь до вершины " << req + 1 << endl;
 	cout << req + 1;
-	bool temp = 0;
+	bool temp = 0; // Существует ли путь
 	int end = req;
 	while (!Edges.empty())
 	{
@@ -379,68 +457,57 @@ Grapth DFS(Grapth gr) {
 		if (e.end == req)
 		{
 			req = e.begin;
-			cout << " <- " << req + 1;
+			cout << " <- " << req + 1; // Выписываем посещенную вершину
 			temp = 1;
 		}
 	}
 	delete[] nodes;
 	if (!temp) cout << "\nотсутствует";
-	else BFS(gr, start, end);
+	else BFS(gr, start, end); // Вызываем поиск в ширину
 	return gr;
 }
 
+/*Генератор графа
+* 
+* @param i Номер теста
+* @param max_ver, min_ver Максимальное/минимальное количество вершин
+* @param max_reb, min_reb Максимальное/минимальное количество ребер
+* @param max_bind Максимальное количество связей у вершины
+* @param oriented Ориентированность
+* @param max_entry, max_exit Максимальное количество входов/выходов
+* @param gr Граф
+* @return gr Граф
+*/
 Grapth grapthGeneration(int i) {
-	int max_ver = 30, min_ver = 3;
-	int max_reb, min_reb = 3;
+	int max_ver = 100, min_ver = 10;
+	int max_reb, min_reb = 10;
 	int max_bind;
 	bool oriented;
 	int max_entry, max_exit;
-	
-	//min_ver = 3 + i * 2;
-	//max_ver = min_ver + 1;
 
 	Grapth gr;
 
-	/*cout << "Введите максимальное количество вершин: ";
-	cin >> max_ver;
-	cout << "Введите минимальное количество вершин: ";
-	cin >> min_ver;
-	cout << "Введите максимальное количество связей у вершины: ";
-	cin >> max_bind;
-	cout << "Ориентированный ли граф? ";
-	cin >> oriented;
-	cout << "Максимальное количество входов: ";
-	cin >> max_entry;
-	cout << "Максимальное количество выходов: ";
-	cin >> max_exit;*/
-
-	/*gr.ver = min_ver + rand() % (max_ver - min_ver);
-	min_reb = 1;
-	max_reb = gr.ver * (gr.ver - 1) / 2;
-
-	gr.reb = min_reb + rand() % (max_reb - min_reb + 1);*/
-	gr.ver = (max_ver) / 10 * (i + 1);
-	gr.reb = min_reb + i * (min_reb + 3);
-	max_bind = ceil(((double)gr.reb * 2) / (double)gr.ver) + rand() % (gr.ver + 1);
-	max_entry = max_exit = max_bind / 2 + 1;
-	oriented = rand() % 2;
-
+	gr.ver = (max_ver) / 10 * (i + 1); // Вершины
+	gr.reb = min_reb + (i * min_reb * 2); // Ребра
+	max_bind = ceil(((double)gr.reb * 2) / (double)gr.ver) + rand() % (gr.ver + 1); // Количество связей
+	max_entry = max_exit = max_bind / 2 + 1; // Входы/выходы
+	oriented = rand() % 2; // Ориентированность
 	cout << "\nВершин: " << gr.ver << "\nРебер: " << gr.reb <<
 		"\nМаксимальное количество связей: " << max_bind << 
 		"\nОриентированный: " << oriented << 
 		"\nМаксимальное количество входов: " << max_entry << 
 		"\nМаксимальное количество выходов: "<< max_exit << endl;
 
-	gr = genMatSmezh(gr, max_bind, oriented);
-	if (oriented) genOriented(gr, max_entry, max_exit);
-	gr = genListReb(gr);
-	gr = genListSmezh(gr);
-	gr = genMatInc(gr, oriented);
+	gr = genMatSmezh(gr, max_bind, oriented); // Матрица смежности
+	if (oriented) genOriented(gr, max_entry, max_exit); // Ориентированность
+	gr = genListReb(gr); // Список ребер
+	gr = genListSmezh(gr); // Список смежности
+	gr = genMatInc(gr, oriented); //Матрица инцидентности
 
-	gr.printMatrixSmezh();
-	gr.printListSmezh();
-	gr.printListReb();
-	gr.printMatrixInc();
+	gr.printMatrixSmezh(); // Вывод матрицы смежности
+	gr.printListSmezh(); // Вывод списка смежности
+	gr.printListReb(); // Вывод списка ребер
+	gr.printMatrixInc(); // Вывод матрицы инцидентности
 
 	return gr;
 }
@@ -450,7 +517,7 @@ void main() {
 	srand(time(0));
 
 	int M = 10;
-	Grapth* gr = new Grapth[M];
+	Grapth* gr = new Grapth[M]; 
 	for (int i = 0; i < M; i++) {
 		cout << "\nТест №" << i + 1 << endl;
 		gr[i] = grapthGeneration(i);
